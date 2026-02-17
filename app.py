@@ -6,10 +6,8 @@ import base64
 import os
 import time
 
-# --- 1. CONFIGURACIÓN ---
 st.set_page_config(page_title="Evaluación Aromatex", page_icon="🌸", layout="wide")
 
-# --- 2. CSS DE MAQUILLAJE ---
 st.markdown("""
     <style>
         /* Fondo Verde Global */
@@ -33,14 +31,12 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- 3. CONEXIÓN AIRTABLE ---
 try:
     api = Api(st.secrets["AIRTABLE_API_KEY"])
     table = api.table(st.secrets["AIRTABLE_BASE_ID"], st.secrets["AIRTABLE_TABLE_NAME"])
 except:
     pass
 
-# --- 4. CARGADOR DE IMÁGENES ---
 def imagen_a_base64(nombre_archivo):
     ruta = os.path.join(os.path.dirname(os.path.abspath(__file__)), nombre_archivo)
     try:
@@ -59,7 +55,6 @@ imagenes_b64 = [
 
 logo_url = "https://aromatex.mx/cdn/shop/files/Asset_1_300x_dcd8525f-0371-4ef2-8b9b-2c8c8437f727.png?v=1742396079&width=200"
 
-# --- 5. INTERFAZ ---
 if 'enviado' not in st.session_state:
     st.session_state['enviado'] = False
 
@@ -113,7 +108,6 @@ if not st.session_state['enviado']:
         st.write("")
         st.write("")
 
-        # --- SOLUCIÓN LOGO CENTRADO (HTML PURO) ---
         st.markdown(f"""
             <div style="display: flex; justify-content: center; width: 100%; margin-top: 20px;">
                 <img src="{logo_url}" width="150" style="opacity: 0.9;">
