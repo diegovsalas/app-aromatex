@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 from st_clickable_images import clickable_images
 from pyairtable import Api
 from datetime import datetime
@@ -9,25 +10,49 @@ import time
 # --- 1. CONFIGURACIÓN ---
 st.set_page_config(page_title="Evaluación Aromatex", page_icon="🌸", layout="wide")
 
-# --- 2. CSS DE BLINDAJE EXTREMO (KIOSCO) ---
+# --- 2. ESCUDO ANTI-ZOOM (JAVASCRIPT) ---
+# Esto bloquea el pellizco y el doble toque directamente en el navegador del iPad
+js_lockdown = """
+<script>
+    const doc = window.parent.document;
+    
+    // Evitar pinch-to-zoom (pellizco con dos dedos)
+    doc.addEventListener('touchmove', function (event) {
+        if (event.scale !== 1 || event.touches.length > 1) {
+            event.preventDefault();
+        }
+    }, { passive: false });
+
+    // Evitar zoom por doble toque rápido
+    let lastTouchEnd = 0;
+    doc.addEventListener('touchend', function (event) {
+        const now = (new Date()).getTime();
+        if (now - lastTouchEnd <= 300) {
+            event.preventDefault();
+        }
+        lastTouchEnd = now;
+    }, false);
+</script>
+"""
+components.html(js_lockdown, height=0, width=0)
+
+# --- 3. CSS DE BLINDAJE EXTREMO ---
 st.markdown("""
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
         
-        /* 1. MATAR EL SCROLL DE RAÍZ Y EL EFECTO REBOTE */
         html, body {
             font-family: 'Montserrat', sans-serif !important;
             overflow: hidden !important;
-            overscroll-behavior: none !important; /* Elimina el rebote del iPad */
-            position: fixed !important; /* Fija la página por completo */
+            overscroll-behavior: none !important;
+            position: fixed !important;
             width: 100vw !important;
             height: 100vh !important;
             margin: 0 !important;
             padding: 0 !important;
-            touch-action: none !important; /* Bloquea gestos en el fondo verde */
+            touch-action: none !important; 
         }
 
-        /* 2. BLOQUEAR LOS CONTENEDORES OCULTOS DE STREAMLIT */
         .stApp, [data-testid="stAppViewContainer"], [data-testid="stMain"], [data-testid="stMainBlockContainer"] {
             overflow: hidden !important;
             overscroll-behavior: none !important;
@@ -35,7 +60,6 @@ st.markdown("""
             touch-action: none !important;
         }
 
-        /* 3. EVITAR SELECCIÓN Y ARRASTRE DE TEXTO/IMÁGENES */
         * {
             -webkit-user-select: none !important;
             user-select: none !important;
@@ -48,11 +72,9 @@ st.markdown("""
             pointer-events: auto !important;
         }
 
-        /* 4. DISEÑO BASE */
         .stApp { background-color: #026456 !important; }
         #MainMenu, footer, header, [data-testid="stHeader"] { display: none !important; }
         
-        /* Ajuste de posición para que quede centrado sin poder hacer scroll */
         h1 { 
             color: white !important; 
             text-align: center; 
@@ -63,12 +85,11 @@ st.markdown("""
             font-family: 'Montserrat', sans-serif !important;
         }
         
-        /* Asegurar que el iframe de las caritas pueda recibir clics */
         iframe { border: none !important; pointer-events: auto !important; }
     </style>
 """, unsafe_allow_html=True)
 
-# --- 3. CONEXIÓN AIRTABLE ---
+# --- 4. CONEXIÓN AIRTABLE ---
 api_key = st.secrets.get("AIRTABLE_API_KEY")
 base_id = st.secrets.get("AIRTABLE_BASE_ID")
 table_name = st.secrets.get("AIRTABLE_TABLE_NAME")
@@ -79,7 +100,7 @@ try:
 except:
     pass
 
-# --- 4. CARGADOR IMÁGENES ---
+# --- 5. CARGADOR IMÁGENES ---
 def imagen_a_base64(nombre_archivo):
     ruta = os.path.join(os.path.dirname(os.path.abspath(__file__)), nombre_archivo)
     try:
@@ -97,7 +118,7 @@ imagenes_b64 = [
 
 logo_url = "https://aromatex.mx/cdn/shop/files/Asset_1_300x_dcd8525f-0371-4ef2-8b9b-2c8c8437f727.png?v=1742396079&width=200"
 
-# --- 5. INTERFAZ (PREGUNTA ÚNICA) ---
+# --- 6. INTERFAZ (PREGUNTA ÚNICA) ---
 if 'enviado' not in st.session_state:
     st.session_state['enviado'] = False
 
