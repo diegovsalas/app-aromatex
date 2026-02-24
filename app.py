@@ -9,43 +9,62 @@ import time
 # --- 1. CONFIGURACIÓN ---
 st.set_page_config(page_title="Evaluación Aromatex", page_icon="🌸", layout="wide")
 
-# --- 2. CSS DE BLINDAJE (MODO KIOSCO) ---
+# --- 2. CSS DE BLINDAJE EXTREMO (KIOSCO) ---
 st.markdown("""
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
         
-        /* 1. BLINDAJE TOTAL DE LA PANTALLA */
-        html, body, [class*="css"], .stApp {
+        /* 1. MATAR EL SCROLL DE RAÍZ Y EL EFECTO REBOTE */
+        html, body {
             font-family: 'Montserrat', sans-serif !important;
-            overflow: hidden !important; /* Bloquea el scroll vertical y horizontal */
-            touch-action: none !important; /* Bloquea zoom de pellizco y doble toque en móviles/tablets */
-            -webkit-user-select: none !important; /* Evita que seleccionen el texto en Safari/iOS */
-            user-select: none !important; /* Evita selección de texto general */
-            -webkit-touch-callout: none !important; /* Evita que salga el menú al dejar presionado */
+            overflow: hidden !important;
+            overscroll-behavior: none !important; /* Elimina el rebote del iPad */
+            position: fixed !important; /* Fija la página por completo */
+            width: 100vw !important;
+            height: 100vh !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            touch-action: none !important; /* Bloquea gestos en el fondo verde */
         }
 
-        /* 2. OCULTAR BARRAS DE SCROLL (Por si acaso) */
-        ::-webkit-scrollbar { display: none !important; }
+        /* 2. BLOQUEAR LOS CONTENEDORES OCULTOS DE STREAMLIT */
+        .stApp, [data-testid="stAppViewContainer"], [data-testid="stMain"], [data-testid="stMainBlockContainer"] {
+            overflow: hidden !important;
+            overscroll-behavior: none !important;
+            height: 100vh !important;
+            touch-action: none !important;
+        }
+
+        /* 3. EVITAR SELECCIÓN Y ARRASTRE DE TEXTO/IMÁGENES */
+        * {
+            -webkit-user-select: none !important;
+            user-select: none !important;
+            -webkit-touch-callout: none !important;
+        }
         
-        /* 3. EVITAR QUE ARRASTREN IMÁGENES (Efecto fantasma) */
         img {
             -webkit-user-drag: none !important;
             user-drag: none !important;
+            pointer-events: auto !important;
         }
 
         /* 4. DISEÑO BASE */
-        .stApp { background-color: #026456; }
-        #MainMenu, footer, header { visibility: hidden; }
+        .stApp { background-color: #026456 !important; }
+        #MainMenu, footer, header, [data-testid="stHeader"] { display: none !important; }
         
+        /* Ajuste de posición para que quede centrado sin poder hacer scroll */
         h1 { 
             color: white !important; 
             text-align: center; 
             font-size: 3.5rem; 
-            margin-bottom: 40px; 
+            margin-top: 8vh !important; 
+            margin-bottom: 40px !important; 
             font-weight: 800; 
+            font-family: 'Montserrat', sans-serif !important;
         }
         
-        iframe { border: none !important; }
+        /* Asegurar que el iframe de las caritas pueda recibir clics */
+        iframe { border: none !important; pointer-events: auto !important; }
     </style>
 """, unsafe_allow_html=True)
 
