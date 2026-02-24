@@ -9,15 +9,34 @@ import time
 # --- 1. CONFIGURACIÓN ---
 st.set_page_config(page_title="Evaluación Aromatex", page_icon="🌸", layout="wide")
 
-# --- 2. CSS ---
+# --- 2. CSS DE BLINDAJE (MODO KIOSCO) ---
 st.markdown("""
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
-        html, body, [class*="css"], h1, h2, h3, p, div {
+        
+        /* 1. BLINDAJE TOTAL DE LA PANTALLA */
+        html, body, [class*="css"], .stApp {
             font-family: 'Montserrat', sans-serif !important;
+            overflow: hidden !important; /* Bloquea el scroll vertical y horizontal */
+            touch-action: none !important; /* Bloquea zoom de pellizco y doble toque en móviles/tablets */
+            -webkit-user-select: none !important; /* Evita que seleccionen el texto en Safari/iOS */
+            user-select: none !important; /* Evita selección de texto general */
+            -webkit-touch-callout: none !important; /* Evita que salga el menú al dejar presionado */
         }
+
+        /* 2. OCULTAR BARRAS DE SCROLL (Por si acaso) */
+        ::-webkit-scrollbar { display: none !important; }
+        
+        /* 3. EVITAR QUE ARRASTREN IMÁGENES (Efecto fantasma) */
+        img {
+            -webkit-user-drag: none !important;
+            user-drag: none !important;
+        }
+
+        /* 4. DISEÑO BASE */
         .stApp { background-color: #026456; }
         #MainMenu, footer, header { visibility: hidden; }
+        
         h1 { 
             color: white !important; 
             text-align: center; 
@@ -25,6 +44,7 @@ st.markdown("""
             margin-bottom: 40px; 
             font-weight: 800; 
         }
+        
         iframe { border: none !important; }
     </style>
 """, unsafe_allow_html=True)
@@ -66,7 +86,6 @@ placeholder = st.empty()
 
 if not st.session_state['enviado']:
     with placeholder.container():
-        # LA PREGUNTA FINAL
         st.markdown("<h1>¿Que le pareció el aroma de la tienda?</h1>", unsafe_allow_html=True)
         
         clic = clickable_images(
@@ -95,7 +114,6 @@ if not st.session_state['enviado']:
                 st.session_state['enviado'] = True
                 st.rerun()
             except Exception as e:
-                # Si Airtable falla, saldrá este cuadro rojo
                 st.error(f"❌ Error al guardar en Airtable: {e}")
             
         st.write("")
@@ -117,7 +135,6 @@ else:
             </div>
         """, unsafe_allow_html=True)
         
-        # Espera 3 segundos y reinicia para el siguiente cliente
         time.sleep(3)
         st.session_state['enviado'] = False
         st.rerun()
