@@ -11,36 +11,28 @@ import time
 st.set_page_config(page_title="Evaluación Aromatex", page_icon="🌸", layout="wide")
 
 # --- 2. ESCUDO ANTI-ZOOM (JAVASCRIPT) ---
-# Esto bloquea el pellizco y el doble toque directamente en el navegador del iPad
 js_lockdown = """
 <script>
     const doc = window.parent.document;
-    
-    // Evitar pinch-to-zoom (pellizco con dos dedos)
     doc.addEventListener('touchmove', function (event) {
-        if (event.scale !== 1 || event.touches.length > 1) {
-            event.preventDefault();
-        }
+        if (event.scale !== 1 || event.touches.length > 1) { event.preventDefault(); }
     }, { passive: false });
-
-    // Evitar zoom por doble toque rápido
     let lastTouchEnd = 0;
     doc.addEventListener('touchend', function (event) {
         const now = (new Date()).getTime();
-        if (now - lastTouchEnd <= 300) {
-            event.preventDefault();
-        }
+        if (now - lastTouchEnd <= 300) { event.preventDefault(); }
         lastTouchEnd = now;
     }, false);
 </script>
 """
 components.html(js_lockdown, height=0, width=0)
 
-# --- 3. CSS DE BLINDAJE EXTREMO ---
+# --- 3. CSS DE BLINDAJE Y DISEÑO DEL CUADRO CENTRAL ---
 st.markdown("""
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
         
+        /* BLINDAJE KIOSCO */
         html, body {
             font-family: 'Montserrat', sans-serif !important;
             overflow: hidden !important;
@@ -48,44 +40,40 @@ st.markdown("""
             position: fixed !important;
             width: 100vw !important;
             height: 100vh !important;
-            margin: 0 !important;
-            padding: 0 !important;
+            margin: 0 !important; padding: 0 !important;
             touch-action: none !important; 
         }
-
         .stApp, [data-testid="stAppViewContainer"], [data-testid="stMain"], [data-testid="stMainBlockContainer"] {
-            overflow: hidden !important;
-            overscroll-behavior: none !important;
-            height: 100vh !important;
-            touch-action: none !important;
+            overflow: hidden !important; overscroll-behavior: none !important;
+            height: 100vh !important; touch-action: none !important;
         }
-
-        * {
-            -webkit-user-select: none !important;
-            user-select: none !important;
-            -webkit-touch-callout: none !important;
-        }
-        
-        img {
-            -webkit-user-drag: none !important;
-            user-drag: none !important;
-            pointer-events: auto !important;
-        }
-
+        * { -webkit-user-select: none !important; user-select: none !important; -webkit-touch-callout: none !important; }
+        img { -webkit-user-drag: none !important; user-drag: none !important; pointer-events: auto !important; }
         .stApp { background-color: #026456 !important; }
         #MainMenu, footer, header, [data-testid="stHeader"] { display: none !important; }
-        
+        iframe { border: none !important; pointer-events: auto !important; }
+
+        /* --- NUEVO: ESTILO DEL CUADRO CENTRAL --- */
+        .caja-evaluacion {
+            background-color: rgba(0, 0, 0, 0.2); /* Fondo oscuro semi-transparente para contraste */
+            border-radius: 30px; /* Bordes muy redondeados */
+            padding: 40px 20px; /* Espacio interior */
+            max-width: 850px; /* Ancho máximo para que no se estire en pantallas grandes */
+            margin: 5vh auto 0 auto; /* Centrado horizontal y un poco de margen arriba */
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3); /* Sombra suave para darle profundidad */
+            text-align: center;
+        }
+
+        /* Ajustamos el título para que quede bien dentro de la caja */
         h1 { 
             color: white !important; 
             text-align: center; 
-            font-size: 3.5rem; 
-            margin-top: 8vh !important; 
-            margin-bottom: 40px !important; 
+            font-size: 3rem; /* Un poco más pequeño para que quepa bien */
+            margin-bottom: 30px !important; 
+            margin-top: 0 !important;
             font-weight: 800; 
             font-family: 'Montserrat', sans-serif !important;
         }
-        
-        iframe { border: none !important; pointer-events: auto !important; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -93,88 +81,66 @@ st.markdown("""
 api_key = st.secrets.get("AIRTABLE_API_KEY")
 base_id = st.secrets.get("AIRTABLE_BASE_ID")
 table_name = st.secrets.get("AIRTABLE_TABLE_NAME")
-
 try:
-    api = Api(api_key)
-    table = api.table(base_id, table_name)
-except:
-    pass
+    api = Api(api_key); table = api.table(base_id, table_name)
+except: pass
 
 # --- 5. CARGADOR IMÁGENES ---
 def imagen_a_base64(nombre_archivo):
     ruta = os.path.join(os.path.dirname(os.path.abspath(__file__)), nombre_archivo)
     try:
-        with open(ruta, "rb") as f:
-            return f"data:image/png;base64,{base64.b64encode(f.read()).decode()}"
-    except:
-        return "" 
+        with open(ruta, "rb") as f: return f"data:image/png;base64,{base64.b64encode(f.read()).decode()}"
+    except: return "" 
 
-imagenes_b64 = [
-    imagen_a_base64("malo.png"), 
-    imagen_a_base64("regular.png"),
-    imagen_a_base64("bueno.png"), 
-    imagen_a_base64("excelente.png")
-]
-
+imagenes_b64 = [imagen_a_base64("malo.png"), imagen_a_base64("regular.png"), imagen_a_base64("bueno.png"), imagen_a_base64("excelente.png")]
 logo_url = "https://aromatex.mx/cdn/shop/files/Asset_1_300x_dcd8525f-0371-4ef2-8b9b-2c8c8437f727.png?v=1742396079&width=200"
 
-# --- 6. INTERFAZ (PREGUNTA ÚNICA) ---
-if 'enviado' not in st.session_state:
-    st.session_state['enviado'] = False
-
+# --- 6. INTERFAZ ---
+if 'enviado' not in st.session_state: st.session_state['enviado'] = False
 placeholder = st.empty()
 
 if not st.session_state['enviado']:
     with placeholder.container():
-        st.markdown("<h1>¿Que le pareció el aroma de la tienda?</h1>", unsafe_allow_html=True)
+        # --- INICIO DEL CUADRO ---
+        st.markdown('<div class="caja-evaluacion">', unsafe_allow_html=True)
+        
+        st.markdown("<h1>¿Qué le pareció el aroma de la tienda?</h1>", unsafe_allow_html=True)
         
         clic = clickable_images(
             imagenes_b64, 
             titles=["Malo", "Regular", "Bueno", "Excelente"], 
             div_style={
-                "display": "flex", "justify-content": "center", "gap": "20px", 
-                "flex-wrap": "wrap", "background-color": "#026456", "padding": "20px"
+                "display": "flex", "justify-content": "center", "gap": "25px", 
+                "flex-wrap": "wrap", 
+                "padding": "10px" # Quitamos el color de fondo de aquí para que tome el de la caja
             },
             img_style={
-                "margin": "10px", "height": "160px", "width": "160px", 
+                "margin": "0", "height": "150px", "width": "150px", # Ajusté un poco el tamaño
                 "cursor": "pointer", "transition": "transform 0.2s", 
                 "border-radius": "50%", "background-color": "white", 
-                "padding": "5px", "box-shadow": "0 10px 20px rgba(0,0,0,0.2)"
+                "padding": "5px", "box-shadow": "0 5px 15px rgba(0,0,0,0.2)"
             },
         )
+        
+        # --- FIN DEL CUADRO ---
+        st.markdown('</div>', unsafe_allow_html=True)
 
         if clic > -1:
             try:
                 table.create({
-                    "Fecha": datetime.now().isoformat(),
-                    "Sucursal": "General",
-                    "Calificacion": [1, 2, 3, 4][clic],
-                    "Etiqueta": ["Malo", "Regular", "Bueno", "Excelente"][clic]
+                    "Fecha": datetime.now().isoformat(), "Sucursal": "General",
+                    "Calificacion": [1, 2, 3, 4][clic], "Etiqueta": ["Malo", "Regular", "Bueno", "Excelente"][clic]
                 })
-                st.session_state['enviado'] = True
-                st.rerun()
-            except Exception as e:
-                st.error(f"❌ Error al guardar en Airtable: {e}")
+                st.session_state['enviado'] = True; st.rerun()
+            except Exception as e: st.error(f"❌ Error en Airtable: {e}")
             
-        st.write("")
-        st.markdown(f"""
-            <div style="display: flex; justify-content: center; width: 100%; margin-top: 20px;">
-                <img src="{logo_url}" width="150" style="opacity: 0.9;">
-            </div>
-        """, unsafe_allow_html=True)
+        st.write(""); st.markdown(f"""<div style="display: flex; justify-content: center; width: 100%; margin-top: 30px;"><img src="{logo_url}" width="150" style="opacity: 0.9;"></div>""", unsafe_allow_html=True)
 
 else:
-    # PANTALLA DE GRACIAS
+    # PANTALLA DE GRACIAS (Mantenemos el diseño limpio anterior)
     with placeholder.container():
-        st.markdown("<br><br>", unsafe_allow_html=True)
-        st.markdown("<h1 style='font-size: 80px;'>¡Gracias!</h1>", unsafe_allow_html=True)
+        st.markdown("<br><br><br>", unsafe_allow_html=True)
+        st.markdown("<h1 style='font-size: 80px; margin-top: 0 !important;'>¡Gracias!</h1>", unsafe_allow_html=True)
         st.markdown("<h3 style='text-align: center; color: white;'>Su opinión nos ayuda a mejorar.</h3>", unsafe_allow_html=True)
-        st.markdown(f"""
-            <div style="display: flex; justify-content: center; width: 100%; margin-top: 40px;">
-                <img src="{logo_url}" width="150" style="opacity: 0.9;">
-            </div>
-        """, unsafe_allow_html=True)
-        
-        time.sleep(3)
-        st.session_state['enviado'] = False
-        st.rerun()
+        st.markdown(f"""<div style="display: flex; justify-content: center; width: 100%; margin-top: 60px;"><img src="{logo_url}" width="150" style="opacity: 0.9;"></div>""", unsafe_allow_html=True)
+        time.sleep(3); st.session_state['enviado'] = False; st.rerun()
