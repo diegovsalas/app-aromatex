@@ -98,7 +98,7 @@ if not st.session_state['enviado']:
             div_style={
                 "display": "flex", "justify-content": "center", "gap": "20px", 
                 "flex-wrap": "wrap", 
-                "background-color": "#026456", /* ESTA LÍNEA ES LA QUE QUITA LA FRANJA NEGRA */
+                "background-color": "#026456", 
                 "padding": "20px"
             },
             img_style={
