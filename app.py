@@ -27,12 +27,12 @@ js_lockdown = """
 """
 components.html(js_lockdown, height=0, width=0)
 
-# --- 3. CSS DE BLINDAJE Y DISEÑO DEL CUADRO CENTRAL ---
+# --- 3. CSS DE BLINDAJE Y DISEÑO LIMPIO ---
 st.markdown("""
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
         
-        /* BLINDAJE KIOSCO */
+        /* BLINDAJE KIOSCO TOTAL */
         html, body {
             font-family: 'Montserrat', sans-serif !important;
             overflow: hidden !important;
@@ -46,31 +46,20 @@ st.markdown("""
         .stApp, [data-testid="stAppViewContainer"], [data-testid="stMain"], [data-testid="stMainBlockContainer"] {
             overflow: hidden !important; overscroll-behavior: none !important;
             height: 100vh !important; touch-action: none !important;
+            background-color: #026456 !important; /* Color de fondo verde */
         }
         * { -webkit-user-select: none !important; user-select: none !important; -webkit-touch-callout: none !important; }
         img { -webkit-user-drag: none !important; user-drag: none !important; pointer-events: auto !important; }
-        .stApp { background-color: #026456 !important; }
         #MainMenu, footer, header, [data-testid="stHeader"] { display: none !important; }
         iframe { border: none !important; pointer-events: auto !important; }
 
-        /* --- NUEVO: ESTILO DEL CUADRO CENTRAL --- */
-        .caja-evaluacion {
-            background-color: rgba(0, 0, 0, 0.2); /* Fondo oscuro semi-transparente para contraste */
-            border-radius: 30px; /* Bordes muy redondeados */
-            padding: 40px 20px; /* Espacio interior */
-            max-width: 850px; /* Ancho máximo para que no se estire en pantallas grandes */
-            margin: 5vh auto 0 auto; /* Centrado horizontal y un poco de margen arriba */
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3); /* Sombra suave para darle profundidad */
-            text-align: center;
-        }
-
-        /* Ajustamos el título para que quede bien dentro de la caja */
+        /* DISEÑO DEL TÍTULO */
         h1 { 
             color: white !important; 
             text-align: center; 
-            font-size: 3rem; /* Un poco más pequeño para que quepa bien */
-            margin-bottom: 30px !important; 
-            margin-top: 0 !important;
+            font-size: 3.5rem; 
+            margin-top: 8vh !important; /* Margen superior para centrar verticalmente */
+            margin-bottom: 40px !important; 
             font-weight: 800; 
             font-family: 'Montserrat', sans-serif !important;
         }
@@ -101,29 +90,23 @@ placeholder = st.empty()
 
 if not st.session_state['enviado']:
     with placeholder.container():
-        # --- INICIO DEL CUADRO ---
-        st.markdown('<div class="caja-evaluacion">', unsafe_allow_html=True)
-        
         st.markdown("<h1>¿Qué le pareció el aroma de la tienda?</h1>", unsafe_allow_html=True)
         
         clic = clickable_images(
             imagenes_b64, 
             titles=["Malo", "Regular", "Bueno", "Excelente"], 
             div_style={
-                "display": "flex", "justify-content": "center", "gap": "25px", 
+                "display": "flex", "justify-content": "center", "gap": "20px", 
                 "flex-wrap": "wrap", 
-                "padding": "10px" # Quitamos el color de fondo de aquí para que tome el de la caja
+                "padding": "20px"
             },
             img_style={
-                "margin": "0", "height": "150px", "width": "150px", # Ajusté un poco el tamaño
+                "margin": "10px", "height": "160px", "width": "160px", 
                 "cursor": "pointer", "transition": "transform 0.2s", 
                 "border-radius": "50%", "background-color": "white", 
-                "padding": "5px", "box-shadow": "0 5px 15px rgba(0,0,0,0.2)"
+                "padding": "5px", "box-shadow": "0 10px 20px rgba(0,0,0,0.2)"
             },
         )
-        
-        # --- FIN DEL CUADRO ---
-        st.markdown('</div>', unsafe_allow_html=True)
 
         if clic > -1:
             try:
@@ -134,13 +117,13 @@ if not st.session_state['enviado']:
                 st.session_state['enviado'] = True; st.rerun()
             except Exception as e: st.error(f"❌ Error en Airtable: {e}")
             
-        st.write(""); st.markdown(f"""<div style="display: flex; justify-content: center; width: 100%; margin-top: 30px;"><img src="{logo_url}" width="150" style="opacity: 0.9;"></div>""", unsafe_allow_html=True)
+        st.write(""); st.markdown(f"""<div style="display: flex; justify-content: center; width: 100%; margin-top: 20px;"><img src="{logo_url}" width="150" style="opacity: 0.9;"></div>""", unsafe_allow_html=True)
 
 else:
-    # PANTALLA DE GRACIAS (Mantenemos el diseño limpio anterior)
+    # PANTALLA DE GRACIAS
     with placeholder.container():
-        st.markdown("<br><br><br>", unsafe_allow_html=True)
-        st.markdown("<h1 style='font-size: 80px; margin-top: 0 !important;'>¡Gracias!</h1>", unsafe_allow_html=True)
+        st.markdown("<br><br>", unsafe_allow_html=True)
+        st.markdown("<h1 style='font-size: 80px;'>¡Gracias!</h1>", unsafe_allow_html=True)
         st.markdown("<h3 style='text-align: center; color: white;'>Su opinión nos ayuda a mejorar.</h3>", unsafe_allow_html=True)
-        st.markdown(f"""<div style="display: flex; justify-content: center; width: 100%; margin-top: 60px;"><img src="{logo_url}" width="150" style="opacity: 0.9;"></div>""", unsafe_allow_html=True)
+        st.markdown(f"""<div style="display: flex; justify-content: center; width: 100%; margin-top: 40px;"><img src="{logo_url}" width="150" style="opacity: 0.9;"></div>""", unsafe_allow_html=True)
         time.sleep(3); st.session_state['enviado'] = False; st.rerun()
