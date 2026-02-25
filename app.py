@@ -46,7 +46,7 @@ st.markdown("""
         .stApp, [data-testid="stAppViewContainer"], [data-testid="stMain"], [data-testid="stMainBlockContainer"] {
             overflow: hidden !important; overscroll-behavior: none !important;
             height: 100vh !important; touch-action: none !important;
-            background-color: #026456 !important; /* Color de fondo verde */
+            background-color: #026456 !important; 
         }
         * { -webkit-user-select: none !important; user-select: none !important; -webkit-touch-callout: none !important; }
         img { -webkit-user-drag: none !important; user-drag: none !important; pointer-events: auto !important; }
@@ -58,7 +58,7 @@ st.markdown("""
             color: white !important; 
             text-align: center; 
             font-size: 3.5rem; 
-            margin-top: 8vh !important; /* Margen superior para centrar verticalmente */
+            margin-top: 8vh !important; 
             margin-bottom: 40px !important; 
             font-weight: 800; 
             font-family: 'Montserrat', sans-serif !important;
@@ -98,6 +98,7 @@ if not st.session_state['enviado']:
             div_style={
                 "display": "flex", "justify-content": "center", "gap": "20px", 
                 "flex-wrap": "wrap", 
+                "background-color": "#026456", /* ESTA LÍNEA ES LA QUE QUITA LA FRANJA NEGRA */
                 "padding": "20px"
             },
             img_style={
