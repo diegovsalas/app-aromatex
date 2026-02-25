@@ -1,130 +1,165 @@
 import streamlit as st
-import streamlit.components.v1 as components
 from st_clickable_images import clickable_images
-from pyairtable import Api
-from datetime import datetime
 import base64
 import os
 import time
 
-# --- 1. CONFIGURACIÓN ---
-st.set_page_config(page_title="Evaluación Aromatex", page_icon="🌸", layout="wide")
+# --- 1. CONFIGURACIÓN DE LA PÁGINA ---
+st.set_page_config(page_title="Evaluación Aromatex", page_icon="🌸", layout="centered")
 
-# --- 2. ESCUDO ANTI-ZOOM (JAVASCRIPT) ---
-js_lockdown = """
-<script>
-    const doc = window.parent.document;
-    doc.addEventListener('touchmove', function (event) {
-        if (event.scale !== 1 || event.touches.length > 1) { event.preventDefault(); }
-    }, { passive: false });
-    let lastTouchEnd = 0;
-    doc.addEventListener('touchend', function (event) {
-        const now = (new Date()).getTime();
-        if (now - lastTouchEnd <= 300) { event.preventDefault(); }
-        lastTouchEnd = now;
-    }, false);
-</script>
-"""
-components.html(js_lockdown, height=0, width=0)
-
-# --- 3. CSS DE BLINDAJE Y DISEÑO LIMPIO ---
+# --- 2. CSS PERSONALIZADO (DISEÑO DE TARJETA Y BLINDAJE) ---
 st.markdown("""
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
-        
-        /* BLINDAJE KIOSCO TOTAL */
-        html, body {
-            font-family: 'Montserrat', sans-serif !important;
-            overflow: hidden !important;
-            overscroll-behavior: none !important;
-            position: fixed !important;
-            width: 100vw !important;
-            height: 100vh !important;
-            margin: 0 !important; padding: 0 !important;
-            touch-action: none !important; 
-        }
-        .stApp, [data-testid="stAppViewContainer"], [data-testid="stMain"], [data-testid="stMainBlockContainer"] {
-            overflow: hidden !important; overscroll-behavior: none !important;
-            height: 100vh !important; touch-action: none !important;
-            background-color: #026456 !important; 
-        }
-        * { -webkit-user-select: none !important; user-select: none !important; -webkit-touch-callout: none !important; }
-        img { -webkit-user-drag: none !important; user-drag: none !important; pointer-events: auto !important; }
-        #MainMenu, footer, header, [data-testid="stHeader"] { display: none !important; }
-        iframe { border: none !important; pointer-events: auto !important; }
+        /* Importar fuente limpia */
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
 
-        /* DISEÑO DEL TÍTULO */
-        h1 { 
-            color: white !important; 
-            text-align: center; 
-            font-size: 3.5rem; 
-            margin-top: 8vh !important; 
-            margin-bottom: 40px !important; 
-            font-weight: 800; 
-            font-family: 'Montserrat', sans-serif !important;
+        /* --- BLINDAJE KIOSCO (Sin scroll ni zoom) --- */
+        html, body {
+            height: 100%;
+            margin: 0;
+            overflow: hidden !important; /* Adiós scroll */
+            touch-action: none; /* Adiós zoom táctil */
+            -webkit-user-select: none; /* No seleccionar texto */
+            user-select: none;
+        }
+        
+        /* --- ESTILOS GENERALES --- */
+        .stApp {
+            background-color: #6A4C9C; /* Color de fondo violeta */
+            font-family: 'Poppins', sans-serif;
+            display: flex;
+            align-items: center; /* Centrado vertical */
+            justify-content: center; /* Centrado horizontal */
+        }
+
+        /* Ocultar elementos de Streamlit */
+        #MainMenu, header, footer, .stDeployButton {
+            display: none !important;
+        }
+
+        /* --- DISEÑO DE LA TARJETA BLANCA --- */
+        .card-container {
+            background-color: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            text-align: center;
+            width: 90%;
+            max-width: 500px; /* Ancho máximo de la tarjeta */
+        }
+
+        /* Título pequeño AROMATEX */
+        .card-title {
+            color: #888;
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+
+        /* Pregunta principal */
+        .card-question {
+            color: #333;
+            font-size: 22px;
+            font-weight: 700;
+            line-height: 1.3;
+            margin-bottom: 30px;
+        }
+
+        /* Contenedor de las etiquetas debajo de los emojis */
+        .labels-container {
+            display: flex;
+            justify-content: space-between;
+            padding: 0 10px;
+            margin-top: -10px;
+            color: #888;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        /* Ajuste para el componente de imágenes clickeables */
+        .stClickableImages {
+            justify-content: center;
         }
     </style>
 """, unsafe_allow_html=True)
 
-# --- 4. CONEXIÓN AIRTABLE ---
-api_key = st.secrets.get("AIRTABLE_API_KEY")
-base_id = st.secrets.get("AIRTABLE_BASE_ID")
-table_name = st.secrets.get("AIRTABLE_TABLE_NAME")
-try:
-    api = Api(api_key); table = api.table(base_id, table_name)
-except: pass
-
-# --- 5. CARGADOR IMÁGENES ---
-def imagen_a_base64(nombre_archivo):
-    ruta = os.path.join(os.path.dirname(os.path.abspath(__file__)), nombre_archivo)
+# --- 3. FUNCIÓN PARA CARGAR IMÁGENES ---
+def cargar_imagen(nombre):
+    """Carga una imagen local y la convierte a base64."""
     try:
-        with open(ruta, "rb") as f: return f"data:image/png;base64,{base64.b64encode(f.read()).decode()}"
-    except: return "" 
+        ruta = os.path.join(os.path.dirname(os.path.abspath(__file__)), nombre)
+        with open(ruta, "rb") as image_file:
+            encoded = base64.b64encode(image_file.read()).decode()
+        return f"data:image/png;base64,{encoded}"
+    except FileNotFoundError:
+        return f"https://via.placeholder.com/150/cccccc/ffffff?text={nombre}" # Placeholder si falla
 
-imagenes_b64 = [imagen_a_base64("malo.png"), imagen_a_base64("regular.png"), imagen_a_base64("bueno.png"), imagen_a_base64("excelente.png")]
-logo_url = "https://aromatex.mx/cdn/shop/files/Asset_1_300x_dcd8525f-0371-4ef2-8b9b-2c8c8437f727.png?v=1742396079&width=200"
+# --- 4. CARGAR LOS 5 EMOJIS ---
+# NOTA: Reemplaza estos nombres con los de tus 5 imágenes de emojis nuevas.
+# Deben ser 5 para coincidir con el diseño del ejemplo.
+imagenes = [
+    cargar_imagen("malo.png"),      # Emoji 1 (Rojo/Terrible)
+    cargar_imagen("regular.png"),   # Emoji 2
+    cargar_imagen("bueno.png"),     # Emoji 3 (Neutro)
+    cargar_imagen("excelente.png"), # Emoji 4
+    cargar_imagen("excelente.png")  # Emoji 5 (Verde/Excelente) - Repetido temporalmente
+]
 
-# --- 6. INTERFAZ ---
-if 'enviado' not in st.session_state: st.session_state['enviado'] = False
-placeholder = st.empty()
+# --- 5. LÓGICA DE LA APLICACIÓN ---
+if 'enviado' not in st.session_state:
+    st.session_state['enviado'] = False
+
+contenedor_principal = st.empty()
 
 if not st.session_state['enviado']:
-    with placeholder.container():
-        st.markdown("<h1>¿Qué le pareció el aroma de la tienda?</h1>", unsafe_allow_html=True)
+    # --- PANTALLA DE PREGUNTA ---
+    with contenedor_principal.container():
+        # Inicia la tarjeta blanca
+        st.markdown('<div class="card-container">', unsafe_allow_html=True)
         
+        # Título y Pregunta
+        st.markdown('<div class="card-title">AROMATEX</div>', unsafe_allow_html=True)
+        st.markdown('<div class="card-question">¿Cómo fue tu experiencia con el aroma de esta sucursal?</div>', unsafe_allow_html=True)
+        
+        # Emojis clickeables
         clic = clickable_images(
-            imagenes_b64, 
-            titles=["Malo", "Regular", "Bueno", "Excelente"], 
-            div_style={
-                "display": "flex", "justify-content": "center", "gap": "20px", 
-                "flex-wrap": "wrap", 
-                "background-color": "#026456", 
-                "padding": "20px"
-            },
-            img_style={
-                "margin": "10px", "height": "160px", "width": "160px", 
-                "cursor": "pointer", "transition": "transform 0.2s", 
-                "border-radius": "50%", "background-color": "white", 
-                "padding": "5px", "box-shadow": "0 10px 20px rgba(0,0,0,0.2)"
-            },
+            imagenes,
+            titles=["Terrible", "Malo", "Regular", "Bueno", "Excelente"],
+            div_style={"display": "flex", "justify-content": "space-between", "gap": "10px"},
+            img_style={"width": "60px", "height": "60px", "cursor": "pointer", "transition": "transform 0.2s"},
+            key="emojis"
         )
+        
+        # Etiquetas debajo
+        st.markdown("""
+            <div class="labels-container">
+                <span>Terrible</span>
+                <span>Excelente</span>
+            </div>
+        """, unsafe_allow_html=True)
+        
+        # Cierra la tarjeta blanca
+        st.markdown('</div>', unsafe_allow_html=True)
 
+        # Lógica al hacer clic
         if clic > -1:
-            try:
-                table.create({
-                    "Fecha": datetime.now().isoformat(), "Sucursal": "General",
-                    "Calificacion": [1, 2, 3, 4][clic], "Etiqueta": ["Malo", "Regular", "Bueno", "Excelente"][clic]
-                })
-                st.session_state['enviado'] = True; st.rerun()
-            except Exception as e: st.error(f"❌ Error en Airtable: {e}")
-            
-        st.write(""); st.markdown(f"""<div style="display: flex; justify-content: center; width: 100%; margin-top: 20px;"><img src="{logo_url}" width="150" style="opacity: 0.9;"></div>""", unsafe_allow_html=True)
+            # Aquí iría tu lógica de guardado en Airtable
+            # Por ahora, solo simulamos el envío
+            st.session_state['enviado'] = True
+            st.rerun()
 
 else:
-    # PANTALLA DE GRACIAS
-    with placeholder.container():
-        st.markdown("<br><br>", unsafe_allow_html=True)
-        st.markdown("<h1 style='font-size: 80px;'>¡Gracias!</h1>", unsafe_allow_html=True)
-        st.markdown("<h3 style='text-align: center; color: white;'>Su opinión nos ayuda a mejorar.</h3>", unsafe_allow_html=True)
-        st.markdown(f"""<div style="display: flex; justify-content: center; width: 100%; margin-top: 40px;"><img src="{logo_url}" width="150" style="opacity: 0.9;"></div>""", unsafe_allow_html=True)
-        time.sleep(3); st.session_state['enviado'] = False; st.rerun()
+    # --- PANTALLA DE GRACIAS ---
+    with contenedor_principal.container():
+        st.markdown('<div class="card-container">', unsafe_allow_html=True)
+        st.markdown('<div class="card-title">AROMATEX</div>', unsafe_allow_html=True)
+        # Icono de check gigante
+        st.markdown('<div style="font-size: 80px; color: #4CAF50; margin: 20px 0;">✅</div>', unsafe_allow_html=True)
+        st.markdown('<div class="card-question">¡Gracias por tu opinión!</div>', unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+        
+        # Esperar y reiniciar
+        time.sleep(3)
+        st.session_state['enviado'] = False
+        st.rerun()
