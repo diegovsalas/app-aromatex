@@ -50,14 +50,14 @@ st.markdown("""
             background-color: #6A4C9C !important; 
         }
 
-        /* 2. LA TARJETA BLANCA (Convertimos el bloque central de Streamlit en la tarjeta) */
+        /* 2. LA TARJETA BLANCA */
         [data-testid="stMainBlockContainer"] {
             background-color: white !important;
             border-radius: 20px !important;
             padding: 40px !important;
             box-shadow: 0 10px 30px rgba(0,0,0,0.3) !important;
-            max-width: 600px !important; /* Ancho de la tarjeta */
-            margin: 15vh auto !important; /* Centrado y espacio arriba */
+            max-width: 600px !important;
+            margin: 15vh auto !important;
         }
 
         /* OCULTAR ELEMENTOS EXTRA */
@@ -108,12 +108,11 @@ def cargar_imagen(nombre):
         with open(ruta, "rb") as f: return f"data:image/png;base64,{base64.b64encode(f.read()).decode()}"
     except: return "" 
 
-# ⚠️ IMPORTANTE: Como ahora son 5 botones, repetí un par de imágenes tuyas para que no marque error. 
-# Debes subir tus 5 iconos nuevos a GitHub con estos nombres exactos (o cambiar los nombres aquí).
+# RECUERDA: Tienes que subir 5 imágenes a GitHub para que queden los 5 botones perfectos.
 imagenes = [
     cargar_imagen("malo.png"), 
-    cargar_imagen("malo.png"),      # <--- Reemplaza cuando tengas el icono 2
-    cargar_imagen("regular.png"),   # <--- Reemplaza cuando tengas el icono 3
+    cargar_imagen("malo.png"),      
+    cargar_imagen("regular.png"),   
     cargar_imagen("bueno.png"), 
     cargar_imagen("excelente.png")
 ]
@@ -128,13 +127,15 @@ if not st.session_state['enviado']:
         st.markdown('<div class="card-title">AROMATEX</div>', unsafe_allow_html=True)
         st.markdown('<div class="card-question">¿Cómo fue tu experiencia con el aroma de esta sucursal?</div>', unsafe_allow_html=True)
         
-        # Emojis (FORZAMOS FONDO BLANCO AQUÍ PARA QUITAR LA BARRA NEGRA)
+        # Emojis 
         clic = clickable_images(
             imagenes, 
             titles=["Terrible", "Malo", "Regular", "Bueno", "Excelente"], 
             div_style={
-                "display": "flex", "justify-content": "space-between", "gap": "10px", 
-                "background-color": "white", /* <--- Adios barra negra */
+                "display": "flex", 
+                "justify-content": "space-between", 
+                "gap": "10px", 
+                "background-color": "white", 
                 "padding": "10px"
             },
             img_style={
