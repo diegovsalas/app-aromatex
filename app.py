@@ -170,3 +170,5 @@ else:
         st.markdown('<div style="font-size: 80px; text-align: center; color: #4CAF50; margin: 20px 0;">✅</div>', unsafe_allow_html=True)
         st.markdown('<div class="card-question">¡Gracias por tu opinión!</div>', unsafe_allow_html=True)
         time.sleep(3); st.session_state['enviado'] = False; st.rerun()
+
+
